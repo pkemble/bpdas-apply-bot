@@ -46,7 +46,6 @@ module.exports = class TacceptCommand extends BaseCommand {
       //content: `${testUser} has submitted the following application:`,
       components: [row],
       embeds: [embed],
-      ephemeral: true,
     });
 
     client.on('interactionCreate', (interaction) => {
@@ -75,6 +74,8 @@ module.exports = class TacceptCommand extends BaseCommand {
       } catch (err) {
         console.log(err);
 
+      } finally {
+        // interaction.reply('.');
       }
     })
 

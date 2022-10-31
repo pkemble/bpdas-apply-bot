@@ -30,12 +30,12 @@ const acceptUser = async (memberId, guildConfig, message) => {
 
 }
 
-const denyUser = async () => {
+const denyUser = async (memberId, interaction) => {
     console.log('denyUser ran')
     return true;
 }
 
-const spaTimeUser = async () => {
+const spaTimeUser = async (memberId, guildConfig, interaction) => {
     console.log('spaTimeUser ran')
     return true;
 }
@@ -74,11 +74,11 @@ const submitApplication = async (client, message, answers) => {
                 new ButtonBuilder()
                     .setCustomId(`button_deny`)
                     .setLabel('deny')
-                    .setStyle(ButtonStyle.Secondary),
+                    .setStyle(ButtonStyle.Danger),
                 new ButtonBuilder()
                     .setCustomId(`button_spa`)
                     .setLabel('spa time')
-                    .setStyle(ButtonStyle.Danger)
+                    .setStyle(ButtonStyle.Primary)
             );
 
             const embed = new EmbedBuilder()
@@ -98,14 +98,15 @@ const submitApplication = async (client, message, answers) => {
                     switch (interaction.customId) {
                         case 'button_accept':
                             acceptUser(memberId, guildConfig, interaction);
+                            editButton(0, interaction);
                             break;
                         case 'button_deny':
-                            ApplicationWorkflow.denyUser();
-
+                            denyUser(memberId, interaction);
+                            editButton(1, interaction);
                             break;
                         case 'button_spa':
-                            ApplicationWorkflow.spaTimeUser();
-
+                            spaTimeUser(memberId, guildConfig, interaction);
+                            editButton(2, interaction);
                             break;
                         default:
                             console.log(`I don't know what button ${interaction.customId} is...`)
@@ -114,10 +115,39 @@ const submitApplication = async (client, message, answers) => {
                 } catch (err) {
                     console.log(err);
 
+                } finally {
+                    interaction.reply();
                 }
             })
         }
     }
+}
+
+const editButton = (res, interaction) => {
+    let newColor = Colors.Yellow;
+    let description = interaction.message.embeds[0].data.description;
+
+    switch (res) {
+        case 0: //accept
+            newColor = Colors.Green;
+            description = '**Application Accepted**\n' + description;
+            break;
+        case 1: //deny
+            newColor = Colors.Red;
+            description = '**Application Denied**\n' + description;
+
+            break;
+        case 2: //spa
+            description = '**Spa time, mother fucker!**\n' + description;
+
+            break;
+
+        default:
+            break;
+    }
+
+    const embed = new EmbedBuilder().setColor(newColor).setDescription(description);
+    interaction.message.edit({ embeds: [embed] });
 }
 
 module.exports = { acceptUser, denyUser, spaTimeUser, submitApplication };
