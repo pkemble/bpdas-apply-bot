@@ -1,6 +1,5 @@
 {
   "name": "bpdas-apply-bot",
   "language": "javascript",
-  "manager": "npm",
-  "prefix": "/apply"
+  "manager": "npm"
 }
