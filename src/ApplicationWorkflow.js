@@ -1,4 +1,4 @@
-const { Client, Message, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, GuildMember } = require("discord.js");
+const { Client, Message, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, GuildMember, ChannelType, PermissionFlagsBits } = require("discord.js");
 const ApplicationForm = require('./utils/structures/ApplicationForm');
 
 /**
@@ -30,38 +30,37 @@ const acceptUser = async (memberId, guildConfig, message) => {
 
 }
 
-const denyUser = async (memberId, interaction) => {
-    console.log('denyUser ran')
-    return true;
+const denyUser = async (memberId, guildConfig, interaction) => {
+    try {
+        const member = interaction.guild.members.cache.get(memberId);
+        member.kick({ reason: guildConfig.ban_reason })
+        console.log(`denying ${member}`)
+
+    } catch (err) {
+        console.log(err)
+
+    }
 }
 
 const spaTimeUser = async (memberId, guildConfig, interaction) => {
     try {
         console.log('spaTimeUser ran')
-        //find a free spa from the spa array
+        //create a spa for the user
         const memberApplicationChannel = await interaction.guild.channels.fetch(guildConfig.application_log_channel_id);
         const spaUser = await interaction.guild.members.fetch(memberId)
-        for (const spa of guildConfig.spa_channel_array.split(',')) {
-            let spaChannel = await interaction.guild.channels.fetch(spa);
-            await spaChannel.messages.fetch(); //refresh cache
-            if (spaChannel && spaChannel.messages.cache.size == 0) {
-                console.log(`found a clean spa: ${spaChannel}`);
-                //add the user to it
-                spaChannel.permissionOverwrites.create(spaUser, {ViewChannel: true, SendMessages: true, AttachFiles: true, EmbedLinks: true})
-                //send a welcome message in the spa
-                spaChannel.send(`${spaUser}:\n\n${guildConfig.spa_intro}`);
-                //tag mods in the application logs
-                memberApplicationChannel.send(`hey guys, got a live one in ${spaChannel}`);
-                return;
-            }
-        }
+        const spaChannelName = `🛌🏾・Spa for ${spaUser.displayName}`
+        const spaChannel = await interaction.guild.channels.create({
+            name: spaChannelName,
+            type: ChannelType.GuildText,
+            parent: guildConfig.spa_channel_category,
+        })
+        await spaChannel.permissionOverwrites.create(spaUser, { ViewChannel: true, SendMessages: true, AttachFiles: true, EmbedLinks: true })
 
-        memberApplicationChannel.send(`I couldn't find an open spa for ${spaUser}\nMaybe my code was written too late at night and too passive aggressively :(`);
-        
+        memberApplicationChannel.send(`${spaChannel} created for ${spaUser}`);
+        spaChannel.send(`${spaUser}\n${guildConfig.spa_intro}`);
 
     } catch (err) {
         console.log(err);
-
     }
 
 }
@@ -72,51 +71,52 @@ const spaTimeUser = async (memberId, guildConfig, interaction) => {
  * @param {Array} answers 
  */
 const submitApplication = async (client, message, answers) => {
-    const applicant = client.users.cache.get(message.author.id);
-    const guildConfig = client.configs.find(c => c.guild_id == message.guildId)
-    const applicationForm = new ApplicationForm();
-    applicationForm.applicantId = applicant.id;
-    let finishedApplication = `${applicant} has submitted the following application: \n`;
-    answers.forEach(a => {
-        finishedApplication += `**${a.question}:** \n${a.answer}\n\n`
-        let que = a.question, ans = a.answer.content;
-        applicationForm.addAnswer({ question: que, answer: ans });
-    });
-    applicationForm.saveToDatabase();
 
-    const memberApplicationChannelId = guildConfig.application_log_channel_id;
-    if (memberApplicationChannelId) {
-        const memberApplicationChannel = client.channels.cache.get(memberApplicationChannelId);
-        if (memberApplicationChannel) {
+    try {
+        const applicant = client.users.cache.get(message.author.id);
+        const guildConfig = client.configs.find(c => c.guild_id == message.guildId)
+        const applicationForm = new ApplicationForm();
+        applicationForm.applicantId = applicant.id;
+        let finishedApplication = `${applicant} has submitted the following application: \n`;
+        answers.forEach(a => {
+            finishedApplication += `**${a.question}:** \n${a.answer}\n\n`
+            let que = a.question, ans = a.answer.content;
+            applicationForm.addAnswer({ question: que, answer: ans });
+        });
+        applicationForm.saveToDatabase();
 
-            const row = new ActionRowBuilder().setComponents(
-                new ButtonBuilder()
-                    .setCustomId(`button_accept`)
-                    .setLabel('accept')
-                    .setStyle(ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId(`button_deny`)
-                    .setLabel('deny')
-                    .setStyle(ButtonStyle.Danger),
-                new ButtonBuilder()
-                    .setCustomId(`button_spa`)
-                    .setLabel('spa time')
-                    .setStyle(ButtonStyle.Primary)
-            );
+        const memberApplicationChannelId = guildConfig.application_log_channel_id;
+        if (memberApplicationChannelId) {
+            const memberApplicationChannel = client.channels.cache.get(memberApplicationChannelId);
+            if (memberApplicationChannel) {
 
-            const embed = new EmbedBuilder()
-                .setColor(Colors.Yellow)
-                .setDescription(finishedApplication)
+                const row = new ActionRowBuilder().setComponents(
+                    new ButtonBuilder()
+                        .setCustomId(`button_accept`)
+                        .setLabel('accept')
+                        .setStyle(ButtonStyle.Success),
+                    new ButtonBuilder()
+                        .setCustomId(`button_deny`)
+                        .setLabel('deny')
+                        .setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder()
+                        .setCustomId(`button_spa`)
+                        .setLabel('spa time')
+                        .setStyle(ButtonStyle.Primary)
+                );
 
-            memberApplicationChannel.send({
-                // content: finishedApplication,
-                components: [row],
-                embeds: [embed],
-            });
+                const embed = new EmbedBuilder()
+                    .setColor(Colors.Yellow)
+                    .setDescription(finishedApplication)
 
-            client.on('interactionCreate', (interaction) => {
-                console.log(interaction);
-                try {
+                memberApplicationChannel.send({
+                    // content: finishedApplication,
+                    components: [row],
+                    embeds: [embed],
+                });
+
+                client.on('interactionCreate', (interaction) => {
+                    console.log(interaction);
                     const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
                     switch (interaction.customId) {
                         case 'button_accept':
@@ -124,7 +124,7 @@ const submitApplication = async (client, message, answers) => {
                             editButton(0, interaction);
                             break;
                         case 'button_deny':
-                            denyUser(memberId, interaction);
+                            denyUser(memberId, guildConfig, interaction);
                             editButton(1, interaction);
                             break;
                         case 'button_spa':
@@ -135,14 +135,14 @@ const submitApplication = async (client, message, answers) => {
                             console.log(`I don't know what button ${interaction.customId} is...`)
                             break;
                     }
-                } catch (err) {
-                    console.log(err);
 
-                } finally {
-                    //interaction.reply();
-                }
-            })
+                })
+            }
         }
+    } catch (err) {
+        console.log(err);
+    } finally {
+        //interaction.reply();
     }
 }
 

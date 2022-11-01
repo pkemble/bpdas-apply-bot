@@ -12,15 +12,16 @@ module.exports = class TacceptCommand extends BaseCommand {
 
     const testId = "1035972676482760737" //testdoc
     //const testUser = message.guild.members.cache.find(m => m.id == testId);
-    const testDescription = `<@1035972676482760737> has submitted the following application:
-    How old are you?:
-    46
+    // const testDescription = `<@1035972676482760737> has submitted the following application:
+    // How old are you?:
+    // 46
     
-    How did you find this server? If a member invited you, please list the member's name and the app/website where you received the invitation.:
-    foo
+    // How did you find this server? If a member invited you, please list the member's name and the app/website where you received the invitation.:
+    // foo
     
-    Who has BPD (relationship), and is it diagnosed or undiagnosed?:
-    sii`
+    // Who has BPD (relationship), and is it diagnosed or undiagnosed?:
+    // sii`
+    const testDescription = `<@1035972676482760737> has submitted the following application:    How old are you?:    46        How did you find this server? If a member invited you, please list the member's name and the app/website where you received the invitation.:    foo        Who has BPD (relationship), and is it diagnosed or undiagnosed?:    sii        Nulla porttitor accumsan tincidunt. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus suscipit tortor eget felis porttitor volutpat. Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Curabitur aliquet quam id dui posuere blandit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus suscipit tortor eget felis porttitor volutpat. Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Quisque velit nisi, pretium ut lacinia in, elementum id enim. Pellentesque in ipsum id orci porta dapibus. Quisque velit nisi, pretium ut lacinia in, elementum id enim. Nulla quis lorem ut libero malesuada feugiat. How old are you?:    46        How did you find this server? If a member invited you, please list the member's name and the app/website where you received the invitation.:    foo        Who has BPD (relationship), and is it diagnosed or undiagnosed?:    sii        Nulla porttitor accumsan tincidunt. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent sapien massa, convallis a pellentesque nec, egestas non nisi. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus suscipit tortor eget felis porttitor volutpat. Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Curabitur aliquet quam id dui posuere blandit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus suscipit tortor eget felis porttitor volutpat. Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus.Vivamus magna justo, lacinia eget consectetur sed, convallis at tellus. Quisque velit nisi, pretium ut lacinia in, elementum id enim. Pellentesque in ipsum id orci porta dapibus. Quisque velit nisi, pretium ut lacinia in, elementum id enim. Nulla quis lorem ut libero malesuada feugiat.`
     const testUser = await message.guild.members.fetch(testId);
     const row = new ActionRowBuilder().setComponents(
       new ButtonBuilder()
@@ -59,7 +60,7 @@ module.exports = class TacceptCommand extends BaseCommand {
             ApplicationWorkflow.editButton(0, interaction);
             break;
           case 'button_deny':
-            //ApplicationWorkflow.denyUser(member);
+            ApplicationWorkflow.denyUser(memberId, guildConfig, interaction);
             ApplicationWorkflow.editButton(1, interaction);
 
             break;
