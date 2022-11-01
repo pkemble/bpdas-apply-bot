@@ -19,6 +19,9 @@ module.exports = new EntitySchema({
         application_log_channel_id: {
             type: "varchar",
         },
+        spa_channel_array: {
+            type: "varchar",
+        },
         newb_role_id: {
             type: "varchar",
         },
@@ -31,6 +34,12 @@ module.exports = new EntitySchema({
         },
         introduction_text: {
             type: "varchar",
-        }
+        },
+        application_outro: {
+            type: "varchar",
+        },
+        spa_intro: {
+            type: "varchar",
+        },
     }
 })

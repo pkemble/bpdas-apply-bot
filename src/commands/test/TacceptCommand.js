@@ -8,6 +8,7 @@ module.exports = class TacceptCommand extends BaseCommand {
   }
 
   async run(client, message, args) {
+    const guildConfig = client.configs.find(c => c.guild_id == message.guildId)
 
     const testId = "1035972676482760737" //testdoc
     //const testUser = message.guild.members.cache.find(m => m.id == testId);
@@ -51,20 +52,20 @@ module.exports = class TacceptCommand extends BaseCommand {
     client.on('interactionCreate', (interaction) => {
       console.log(interaction);
       try {
-        const member = interaction.message.mentions.users.first();
+        const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
         switch (interaction.customId) {
           case 'button_accept':
             //ApplicationWorkflow.acceptUser(member);
-            this.editButton(0, interaction);
+            ApplicationWorkflow.editButton(0, interaction);
             break;
           case 'button_deny':
             //ApplicationWorkflow.denyUser(member);
-            this.editButton(1, interaction);
+            ApplicationWorkflow.editButton(1, interaction);
 
             break;
           case 'button_spa':
-            //ApplicationWorkflow.spaTimeUser(member);
-            this.editButton(2, interaction);
+            ApplicationWorkflow.spaTimeUser(memberId, guildConfig, interaction);
+            ApplicationWorkflow.editButton(2, interaction);
 
             break;
           default:
@@ -81,31 +82,31 @@ module.exports = class TacceptCommand extends BaseCommand {
 
   }
 
-  editButton(res, interaction) {
-    let newColor = Colors.Yellow;
-    let description = interaction.message.embeds[0].data.description;
+  // editButton(res, interaction) {
+  //   let newColor = Colors.Yellow;
+  //   let description = interaction.message.embeds[0].data.description;
 
-    switch (res) {
-      case 0: //accept
-        newColor = Colors.Green;
-        description = '**Application Accepted**\n' + description;
-        break;
-      case 1: //deny
-        newColor = Colors.Red;
-        description = '**Application Denied**\n' + description;
+  //   switch (res) {
+  //     case 0: //accept
+  //       newColor = Colors.Green;
+  //       description += `\n\n**Application Accepted**\nby ${interaction.user} on ${new Date().toUTCString()}`;
+  //       break;
+  //     case 1: //deny
+  //       newColor = Colors.Red;
+  //       description = '**Application Denied**\n' + description;
 
-        break;
-      case 2: //spa
-        description = '**Spa time, mother fucker!**\n' + description;
+  //       break;
+  //     case 2: //spa
+  //       description = '**Spa time, mother fucker!**\n' + description;
 
-        break;
+  //       break;
 
-      default:
-        break;
-    }
+  //     default:
+  //       break;
+  //   }
 
-    const embed = new EmbedBuilder().setColor(newColor).setDescription(description);
-    interaction.message.edit({ embeds: [embed] });
-  }
+  //   const embed = new EmbedBuilder().setColor(newColor).setDescription(description);
+  //   interaction.message.edit({ embeds: [embed] });
+  // }
 
 }

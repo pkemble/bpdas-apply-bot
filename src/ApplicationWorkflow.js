@@ -36,8 +36,34 @@ const denyUser = async (memberId, interaction) => {
 }
 
 const spaTimeUser = async (memberId, guildConfig, interaction) => {
-    console.log('spaTimeUser ran')
-    return true;
+    try {
+        console.log('spaTimeUser ran')
+        //find a free spa from the spa array
+        const memberApplicationChannel = await interaction.guild.channels.fetch(guildConfig.application_log_channel_id);
+        const spaUser = await interaction.guild.members.fetch(memberId)
+        for (const spa of guildConfig.spa_channel_array.split(',')) {
+            let spaChannel = await interaction.guild.channels.fetch(spa);
+            await spaChannel.messages.fetch(); //refresh cache
+            if (spaChannel && spaChannel.messages.cache.size == 0) {
+                console.log(`found a clean spa: ${spaChannel}`);
+                //add the user to it
+                spaChannel.permissionOverwrites.create(spaUser, {ViewChannel: true, SendMessages: true, AttachFiles: true, EmbedLinks: true})
+                //send a welcome message in the spa
+                spaChannel.send(`${spaUser}:\n\n${guildConfig.spa_intro}`);
+                //tag mods in the application logs
+                memberApplicationChannel.send(`hey guys, got a live one in ${spaChannel}`);
+                return;
+            }
+        }
+
+        memberApplicationChannel.send(`I couldn't find an open spa for ${spaUser}\nMaybe my code was written too late at night and too passive aggressively :(`);
+        
+
+    } catch (err) {
+        console.log(err);
+
+    }
+
 }
 /**
  * 
@@ -62,10 +88,7 @@ const submitApplication = async (client, message, answers) => {
     if (memberApplicationChannelId) {
         const memberApplicationChannel = client.channels.cache.get(memberApplicationChannelId);
         if (memberApplicationChannel) {
-            //memberApplicationChannel.send(finishedApplication);
-            // const testId = "1035972676482760737" //testdoc
-            //const testUser = message.guild.members.cache.find(m => m.id == testId);
-            // const testUser = await message.guild.members.fetch(testId);
+
             const row = new ActionRowBuilder().setComponents(
                 new ButtonBuilder()
                     .setCustomId(`button_accept`)
@@ -85,7 +108,7 @@ const submitApplication = async (client, message, answers) => {
                 .setColor(Colors.Yellow)
                 .setDescription(finishedApplication)
 
-            message.channel.send({
+            memberApplicationChannel.send({
                 // content: finishedApplication,
                 components: [row],
                 embeds: [embed],
@@ -116,7 +139,7 @@ const submitApplication = async (client, message, answers) => {
                     console.log(err);
 
                 } finally {
-                    interaction.reply();
+                    //interaction.reply();
                 }
             })
         }
@@ -125,29 +148,30 @@ const submitApplication = async (client, message, answers) => {
 
 const editButton = (res, interaction) => {
     let newColor = Colors.Yellow;
-    let description = interaction.message.embeds[0].data.description;
-
+    let description = '';
     switch (res) {
         case 0: //accept
             newColor = Colors.Green;
-            description = '**Application Accepted**\n' + description;
+            description += `\n\n**Application Accepted**\nby ${interaction.user} on ${new Date().toUTCString()}`;
             break;
         case 1: //deny
             newColor = Colors.Red;
-            description = '**Application Denied**\n' + description;
-
+            description += `\n\n**Application Denied**\nby ${interaction.user} on ${new Date().toUTCString()}`;
             break;
         case 2: //spa
-            description = '**Spa time, mother fucker!**\n' + description;
-
+            description += `\n\n**Spa time, mother fucker!**\nby ${interaction.user} on ${new Date().toUTCString()}`;
             break;
-
         default:
             break;
     }
 
     const embed = new EmbedBuilder().setColor(newColor).setDescription(description);
-    interaction.message.edit({ embeds: [embed] });
+    interaction.message.edit({
+        embeds: [
+            interaction.message.embeds[0],
+            embed
+        ]
+    });
 }
 
-module.exports = { acceptUser, denyUser, spaTimeUser, submitApplication };
+module.exports = { acceptUser, denyUser, spaTimeUser, submitApplication, editButton };

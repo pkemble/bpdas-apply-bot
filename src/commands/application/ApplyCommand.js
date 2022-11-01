@@ -17,17 +17,18 @@ module.exports = class ApplyCommand extends BaseCommand {
     //const guildConfig = client.getCurrentConfig(message.guildId);
     const guildConfig = client.configs.find(c => c.guild_id == message.guildId);
     const intro = guildConfig.introduction_text;
+    const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
     const guildApplicationQuestions = await questionRepo.find();
     client.applicationQuestions = guildApplicationQuestions;
     const questions = client.applicationQuestions; //redundant...
     const appDm = await client.users.cache.get(message.author.id).send(intro);
 
-    await this.interrogate(0, questions, appDm, message)
+    await this.interrogate(0, questions, appDm, message, applicationOutro)
 
   }
 
-  async interrogate(i, questions, appDm, message) {
+  async interrogate(i, questions, appDm, message, applicationOutro) {
     const filter = m => m.author.id === message.author.id;
     const question = questions[i].question;
     await appDm.channel.send(question).then(async () => {
@@ -35,8 +36,8 @@ module.exports = class ApplyCommand extends BaseCommand {
         .awaitMessages({
           filter,
           max: 1,
-          time: 60_000,
-          errors: ['time']
+          time: 60_000 * 60 * 24,
+          errors: ['application timed out']
         }).then((collected) => {
           // console.log(collected);
           answers.push({
@@ -46,11 +47,13 @@ module.exports = class ApplyCommand extends BaseCommand {
           if (i === questions.length - 1) {
             // console.log(`Answers: \n ${answers}`)
             //this.sendApplication(this.client, message, answers);
+
+            appDm.channel.send(applicationOutro);
             submitApplication(this.client, message, answers);
             return;
           } else {
             i++;
-            this.interrogate(i, questions, appDm, message)
+            this.interrogate(i, questions, appDm, message, applicationOutro)
           }
         }).catch((err) => {
           console.log(err);
