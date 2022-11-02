@@ -8,6 +8,7 @@ module.exports = class CleanspasCommand extends BaseCommand {
   }
 
   async run(client, message, args) {
+    return;
     const guildConfig = client.configs.find(c => c.guild_id == message.guild.id);
     const spaCategoryId = guildConfig.spa_channel_category;
     let spaStrings = '';
