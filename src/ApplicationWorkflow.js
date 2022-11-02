@@ -70,21 +70,11 @@ const spaTimeUser = async (memberId, guildConfig, interaction) => {
  * @param {Message} message 
  * @param {Array} answers 
  */
-const submitApplication = async (client, message, answers) => {
+const submitApplication = async (client, interaction, applicationForm) => {
 
     try {
-        const applicant = client.users.cache.get(message.author.id);
-        const guildConfig = client.configs.find(c => c.guild_id == message.guildId)
-        const applicationForm = new ApplicationForm();
-        applicationForm.applicantId = applicant.id;
-        let finishedApplication = `${applicant} has submitted the following application: \n`;
-        answers.forEach(a => {
-            finishedApplication += `**${a.question}:** \n${a.answer}\n\n`
-            let que = a.question, ans = a.answer.content;
-            applicationForm.addAnswer({ question: que, answer: ans });
-        });
-        applicationForm.saveToDatabase();
-
+//        const applicant = client.users.cache.get(message.author.id);
+        const guildConfig = client.configs.find(c => c.guild_id == interaction.guildId)
         const memberApplicationChannelId = guildConfig.application_log_channel_id;
         if (memberApplicationChannelId) {
             const memberApplicationChannel = client.channels.cache.get(memberApplicationChannelId);
@@ -92,62 +82,28 @@ const submitApplication = async (client, message, answers) => {
 
                 const row = new ActionRowBuilder().setComponents(
                     new ButtonBuilder()
-                        .setCustomId(`button_accept_${applicationForm.date}`)
+                        .setCustomId(`apply_button_accept_${applicationForm.applicantId}`)
                         .setLabel('accept')
                         .setStyle(ButtonStyle.Success),
                     new ButtonBuilder()
-                        .setCustomId(`button_deny_${applicationForm.date}`)
+                        .setCustomId(`apply_button_deny_${applicationForm.applicantId}`)
                         .setLabel('deny')
                         .setStyle(ButtonStyle.Danger),
                     new ButtonBuilder()
-                        .setCustomId(`button_spa_${applicationForm.date}`)
+                        .setCustomId(`apply_button_spa_${applicationForm.applicantId}`)
                         .setLabel('spa time')
                         .setStyle(ButtonStyle.Primary)
                 );
 
                 const embed = new EmbedBuilder()
                     .setColor(Colors.Yellow)
-                    .setDescription(finishedApplication)
+                    .setDescription(applicationForm.readableApp)
 
                 memberApplicationChannel.send({
                     // content: finishedApplication,
                     components: [row],
                     embeds: [embed],
                 });
-
-                client.on('interactionCreate', async interaction => {
-                    try {
-                        //console.log(interaction);
-                        const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
-                        switch (interaction.customId) {
-                            case `button_accept_${applicationForm.date}`:
-                                await acceptUser(memberId, guildConfig, interaction);
-                                await editButton(0, interaction);
-                                break;
-                            case `button_deny_${applicationForm.date}`:
-                                await denyUser(memberId, guildConfig, interaction);
-                                await editButton(1, interaction);
-                                break;
-                            case `button_spa_${applicationForm.date}`:
-                                await spaTimeUser(memberId, guildConfig, interaction);
-                                await editButton(2, interaction);
-                                break;
-                            default:
-                                console.log(`I don't know what button ${interaction.customId} is...`)
-                                break;
-                        }
-                    } catch (error) {
-                        console.log(error);
-                    } finally {
-                        if (!interaction.deferred && !interaction.replied) {
-                            try {
-                                await interaction.deferUpdate();
-                            } catch (error) {
-                                console.log(error);
-                            }
-                        }
-                    }
-                })
             }
         }
     } catch (err) {
@@ -155,6 +111,40 @@ const submitApplication = async (client, message, answers) => {
     } finally {
     }
 }
+
+
+const applicationButtonInteraction = ( async (interaction, guildConfig) => { //interaction.commandName 'apply', 
+    try {
+        const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
+        switch (interaction.customId) {
+            case `apply_button_accept_${memberId}`:
+                await acceptUser(memberId, guildConfig, interaction);
+                await editButton(0, interaction);
+                break;
+            case `apply_button_deny_${memberId}`:
+                await denyUser(memberId, guildConfig, interaction);
+                await editButton(1, interaction);
+                break;
+            case `apply_button_spa_${memberId}`:
+                await spaTimeUser(memberId, guildConfig, interaction);
+                await editButton(2, interaction);
+                break;
+            default:
+                console.log(`I don't know what button ${interaction.customId} is...`)
+                break;
+        }
+    } catch (error) {
+        console.log(error);
+    } finally {
+        if (!interaction.deferred && !interaction.replied) {
+            try {
+                await interaction.deferUpdate();
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
+})
 
 const editButton = async (res, interaction) => {
     let options = {};
@@ -200,4 +190,4 @@ const editButton = async (res, interaction) => {
     //await interaction.deferUpdate();
 }
 
-module.exports = { acceptUser, denyUser, spaTimeUser, submitApplication, editButton };
+module.exports = { acceptUser, denyUser, spaTimeUser, submitApplication, editButton, applicationButtonInteraction };

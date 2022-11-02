@@ -1,5 +1,6 @@
 const { acceptUser } = require('../../ApplicationWorkflow');
 const BaseCommand = require('../../utils/structures/BaseCommand');
+const { SlashCommandBuilder } = require('discord.js')
 
 module.exports = class AcceptUserCommand extends BaseCommand {
   constructor() {
@@ -16,6 +17,13 @@ module.exports = class AcceptUserCommand extends BaseCommand {
     };
   }
 
+  getSlashCommandJSON() {
+    return new SlashCommandBuilder()
+      .setName(this.name)
+      .setDescription('Manually accept a user')
+      .addUserOption((option) => option.setName('user').setDescription('Tagged target user').setRequired(true))
+      .toJSON();
+  }
   // async acceptUser(member, guildConfigs, message) {
   //   const newbRole = message.guild.roles.cache.find(r => r.id == guildConfigs.newb_role_id);
   //   const acceptRole = message.guild.roles.cache.find(a => a.id == guildConfigs.accepted_role_id);

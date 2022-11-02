@@ -6,6 +6,7 @@ module.exports = class ApplicationForm {
         this.applicantId = applicantId;
         this.date = Date.now();
         this.answers = [];
+        this.readableApp = '';
     }
 
     addAnswer(qaObj) {

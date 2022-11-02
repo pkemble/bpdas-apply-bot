@@ -1,10 +1,19 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, EmbedBuilder, GuildMemberManager, Colors, Embed } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ButtonInteraction, EmbedBuilder, GuildMemberManager, Colors, Embed, SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const ApplicationWorkflow = require('../../ApplicationWorkflow');
 const BaseCommand = require('../../utils/structures/BaseCommand');
 
 module.exports = class TacceptCommand extends BaseCommand {
   constructor() {
     super('taccept', 'test', []);
+  }
+
+  getSlashCommandJSON() {
+    return new SlashCommandBuilder()
+      .setName(this.name)
+      .setDescription('Send a test application')
+      // .addUserOption((option) => option.setName('user').setDescription('Tagged target user').setRequired(true))
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+      .toJSON();
   }
 
   async run(client, message, args) {
