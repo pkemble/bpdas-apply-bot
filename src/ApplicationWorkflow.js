@@ -56,8 +56,8 @@ const spaTimeUser = async (memberId, guildConfig, interaction) => {
         })
         await spaChannel.permissionOverwrites.create(spaUser, { ViewChannel: true, SendMessages: true, AttachFiles: true, EmbedLinks: true })
 
-        memberApplicationChannel.send(`${spaChannel} created for ${spaUser}`);
-        spaChannel.send(`${spaUser}\n${guildConfig.spa_intro}`);
+        await memberApplicationChannel.send(`${spaChannel} created for ${spaUser}`);
+        await spaChannel.send(`${spaUser}\n${guildConfig.spa_intro}`);
 
     } catch (err) {
         console.log(err);
@@ -92,15 +92,15 @@ const submitApplication = async (client, message, answers) => {
 
                 const row = new ActionRowBuilder().setComponents(
                     new ButtonBuilder()
-                        .setCustomId(`button_accept`)
+                        .setCustomId(`button_accept_${applicationForm.date}`)
                         .setLabel('accept')
                         .setStyle(ButtonStyle.Success),
                     new ButtonBuilder()
-                        .setCustomId(`button_deny`)
+                        .setCustomId(`button_deny_${applicationForm.date}`)
                         .setLabel('deny')
                         .setStyle(ButtonStyle.Danger),
                     new ButtonBuilder()
-                        .setCustomId(`button_spa`)
+                        .setCustomId(`button_spa_${applicationForm.date}`)
                         .setLabel('spa time')
                         .setStyle(ButtonStyle.Primary)
                 );
@@ -115,63 +115,89 @@ const submitApplication = async (client, message, answers) => {
                     embeds: [embed],
                 });
 
-                client.on('interactionCreate', (interaction) => {
-                    console.log(interaction);
-                    const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
-                    switch (interaction.customId) {
-                        case 'button_accept':
-                            acceptUser(memberId, guildConfig, interaction);
-                            editButton(0, interaction);
-                            break;
-                        case 'button_deny':
-                            denyUser(memberId, guildConfig, interaction);
-                            editButton(1, interaction);
-                            break;
-                        case 'button_spa':
-                            spaTimeUser(memberId, guildConfig, interaction);
-                            editButton(2, interaction);
-                            break;
-                        default:
-                            console.log(`I don't know what button ${interaction.customId} is...`)
-                            break;
+                client.on('interactionCreate', async interaction => {
+                    try {
+                        //console.log(interaction);
+                        const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
+                        switch (interaction.customId) {
+                            case `button_accept_${applicationForm.date}`:
+                                await acceptUser(memberId, guildConfig, interaction);
+                                await editButton(0, interaction);
+                                break;
+                            case `button_deny_${applicationForm.date}`:
+                                await denyUser(memberId, guildConfig, interaction);
+                                await editButton(1, interaction);
+                                break;
+                            case `button_spa_${applicationForm.date}`:
+                                await spaTimeUser(memberId, guildConfig, interaction);
+                                await editButton(2, interaction);
+                                break;
+                            default:
+                                console.log(`I don't know what button ${interaction.customId} is...`)
+                                break;
+                        }
+                    } catch (error) {
+                        console.log(error);
+                    } finally {
+                        if (!interaction.deferred && !interaction.replied) {
+                            try {
+                                await interaction.deferUpdate();
+                            } catch (error) {
+                                console.log(error);
+                            }
+                        }
                     }
-
                 })
             }
         }
     } catch (err) {
         console.log(err);
     } finally {
-        //interaction.reply();
     }
 }
 
-const editButton = (res, interaction) => {
-    let newColor = Colors.Yellow;
-    let description = '';
+const editButton = async (res, interaction) => {
+    let options = {};
+    const appText = interaction.message.embeds[0].data.description;
     switch (res) {
         case 0: //accept
-            newColor = Colors.Green;
-            description += `\n\n**Application Accepted**\nby ${interaction.user} on ${new Date().toUTCString()}`;
+            const acceptEmbeds = new EmbedBuilder()
+                .setColor(Colors.Green)
+                .setDescription(`${appText}\n\n**Application Accepted**\nby ${interaction.user} on ${new Date().toUTCString()}`)
+
+            options = {
+                embeds: [acceptEmbeds],
+                components: []
+            }
+
             break;
         case 1: //deny
-            newColor = Colors.Red;
-            description += `\n\n**Application Denied**\nby ${interaction.user} on ${new Date().toUTCString()}`;
+            const denyEmbeds = new EmbedBuilder()
+                .setColor(Colors.Red)
+                .setDescription(`${appText}\n\n**Application Denied**\nby ${interaction.user} on ${new Date().toUTCString()}`)
+            options = {
+                embeds: [denyEmbeds],
+                components: []
+            }
             break;
         case 2: //spa
-            description += `\n\n**Spa time, mother fucker!**\nby ${interaction.user} on ${new Date().toUTCString()}`;
+            const spaEmbeds = new EmbedBuilder()
+                .setColor(Colors.DarkGold)
+                .setDescription(`${appText}\n\n**Spa time, mother fucker!**\nby ${interaction.user} on ${new Date().toUTCString()}`)
+
+            options = {
+                embeds: [spaEmbeds],
+                components: [
+                    interaction.message.components[0]
+                ]
+            }
             break;
         default:
             break;
     }
-
-    const embed = new EmbedBuilder().setColor(newColor).setDescription(description);
-    interaction.message.edit({
-        embeds: [
-            interaction.message.embeds[0],
-            embed
-        ]
-    });
+    console.log(`Updating interaction with message options\n${JSON.stringify(options)}`)
+    await interaction.message.edit(options);
+    //await interaction.deferUpdate();
 }
 
 module.exports = { acceptUser, denyUser, spaTimeUser, submitApplication, editButton };

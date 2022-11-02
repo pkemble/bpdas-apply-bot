@@ -19,11 +19,10 @@ class DiscordClient extends Client {
         this._applicationQuestions = guildApplicationQuestions;
 
     }
-
-
-}
-const getCurrentConfig = (guildId) => {
-    return this.configs.find(c => c.guild_id == guildId);
+    get currentConfig() {
+        return this._configs.find(c => c.guild_id == this.guild_id);
+    }
 }
 
-module.exports = { getCurrentConfig };
+// module.exports = { getCurrentConfig };
+
