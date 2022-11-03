@@ -19,7 +19,6 @@ module.exports = class CleanspasCommand extends BaseCommand {
     const guildConfig = client.configs.find(c => c.guild_id == interaction.guild.id);
 
     let spaStrings = '';
-    let spaTitles = '';
     const spaArray = await getSpas(client, guildConfig);
 
     if (!spaArray || spaArray.size === 0) {
@@ -36,7 +35,6 @@ module.exports = class CleanspasCommand extends BaseCommand {
 
     for (const spa of spaArray) {
       spaStrings += `${spa[1]}\n`;
-      spaTitles += `${spa[1].name}\n`;
     }
 
     const buttonRow = new ActionRowBuilder()

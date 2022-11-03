@@ -21,3 +21,7 @@ module.exports = new EntitySchema({
         }
     }
 })
+
+class ApplicationLog {
+
+}
