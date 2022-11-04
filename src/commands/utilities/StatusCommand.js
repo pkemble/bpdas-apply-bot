@@ -15,7 +15,7 @@ module.exports = class StatusCommand extends BaseCommand {
   }
 
   run(client, message, args) {
-    message.channel.send(`I'm awake and ready to send traumatized people into a spa 😚`);
+    message.send(`I'm awake and ready to send traumatized people into a spa 😚`);
     
   }
 }
