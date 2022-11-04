@@ -74,12 +74,14 @@ async function main() {
     await client.rest.put(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id), {
       body: [...slashCommandsJson],
     });
-    const registeredSlashCommands = await client.rest.get(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id))
-      .then(() => {
+    try {
+          const registeredSlashCommands = await client.rest.get(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id))
         console.log(`Registered the following commands for ${conf.guild_id}`);
         console.log(registeredSlashCommands);
-      })
-      .catch((err) => console.log(err));
+    } catch (error) {
+      console.log(error);
+    }
+
   })
 }
 
