@@ -71,13 +71,13 @@ async function main() {
     cmd.getSlashCommandJSON()
   );
   client.configs.map(async (conf) => {
-    await client.rest.put(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id), {
-      body: [...slashCommandsJson],
-    });
     try {
-          const registeredSlashCommands = await client.rest.get(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id))
-        console.log(`Registered the following commands for ${conf.guild_id}`);
-        console.log(registeredSlashCommands);
+      await client.rest.put(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id), {
+        body: [...slashCommandsJson],
+      });
+      const registeredSlashCommands = await client.rest.get(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id))
+      console.log(`Registered the following commands for ${conf.guild_id}`);
+      console.log(registeredSlashCommands);
     } catch (error) {
       console.log(error);
     }
