@@ -30,22 +30,22 @@ client.on('interactionCreate', (interaction) => {
 
     console.log(commandName);
 
-    if(cmd) { 
+    if (cmd) {
       cmd.run(client, interaction);
     } else {
-      interaction.reply({ content: `This command is ignoring you (no run method).`});
+      interaction.reply({ content: `This command is ignoring you (no run method).` });
     }
-  } 
+  }
   if (interaction.isButton()) {
     //const { commandName } = interaction;
     //there has to be a better way to do this, but i need to grab the type of interaction based on the button clicked.
     //right now this will come from the button's 'customId' property.
-    if(interaction.customId.startsWith('apply_button_')){
+    if (interaction.customId.startsWith('apply_button_')) {
 
       console.log('Application button clicked');
       applicationButtonInteraction(interaction, guildConfig);
     }
-    if(interaction.customId.startsWith('cleanspas_')){
+    if (interaction.customId.startsWith('cleanspas_')) {
       console.log('Spa cleaner button clicked')
       cleanSpas(client, interaction, guildConfig);
     }
@@ -74,10 +74,13 @@ async function main() {
     await client.rest.put(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id), {
       body: [...slashCommandsJson],
     });
-    const registeredSlashCommands = await client.rest.get(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id));
-    console.log(`Registered the following commands for ${conf.guild_id}`);
-    console.log(registeredSlashCommands);
+    const registeredSlashCommands = await client.rest.get(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id))
+      .then(() => {
+        console.log(`Registered the following commands for ${conf.guild_id}`);
+        console.log(registeredSlashCommands);
+      })
+      .catch((err) => console.log(err));
   })
 }
- 
+
 main();
