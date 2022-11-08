@@ -1,4 +1,4 @@
-const { Client, Message, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, GuildMember, ChannelType, PermissionFlagsBits, SelectMenuBuilder } = require("discord.js");
+const { Client, Message, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, GuildMember, ChannelType, PermissionFlagsBits, SelectMenuBuilder, SelectMenuOptionBuilder, SelectMenuComponent } = require("discord.js");
 const BpdasDatasource = require("../typeorm/BpdasDatasource");
 const DenialReasons = require("../typeorm/entities/DenialReasons");
 const ApplicationForm = require('../utils/structures/ApplicationForm');
@@ -32,8 +32,10 @@ const acceptUser = async (memberId, guildConfig, message) => {
 
 }
 
-const denyUser = async (memberId, guildConfig, interaction) => {
+const getDenialReason = async (memberId, guildConfig, interaction) => {
     try {
+        const member = interaction.guild.members.cache.get(memberId);
+
         //create an interaction
         const memberApplicationChannel = await interaction.guild.channels.fetch(guildConfig.application_log_channel_id);
         const buttonRow = new ActionRowBuilder().addComponents(
@@ -47,31 +49,18 @@ const denyUser = async (memberId, guildConfig, interaction) => {
                 .setStyle(ButtonStyle.Secondary)
         );
 
-        const options = buildDenialReasons(memberId, guildConfig).then((response) => {console.log(response)});
+        const selectMenuRow = await buildDenialReasons(memberId, guildConfig);
 
-        const selectRow = new ActionRowBuilder().addComponents(
-            new SelectMenuBuilder()
-                .setCustomId('denial_interaction_reasons')
-                .setPlaceholder('Select a reason for denial')
-                .addOptions(options)
-        )
 
         const embed = new EmbedBuilder()
             .setColor(Colors.Red)
             .setTitle(`Denying Applicant ${member}`)
             .setDescription('This will deny the application for the selected reason. The user will be kicked from the server and receive a message with the reason given.');
 
-
         await interaction.reply({
             embeds: [embed],
-            components: [selectRow, buttonRow],
+            components: [selectMenuRow, buttonRow],
         });
-
-        //act on the response
-        const member = interaction.guild.members.cache.get(memberId);
-        const user = member.user.send()
-        member.kick({ reason: guildConfig.ban_reason })
-        console.log(`denying ${member}`)
 
     } catch (err) {
         console.log(err)
@@ -79,18 +68,35 @@ const denyUser = async (memberId, guildConfig, interaction) => {
     }
 }
 
+const denyUser = async (interaction) => {   
+    //get memberId, etc...
+    const user = member.user.send()
+    member.kick({ reason: guildConfig.ban_reason })
+    console.log(`denying ${member}`)
+}
+
 const buildDenialReasons = async (memberId, guildConfig) => {
-    const denialReasons = await BpdasDatasource.getRepository(DenialReasons).find();
-    let options = []
-    denialReasons.forEach((reason) => {
-        const selReason = {
-            label: `denial_interaction_reason_${reason.reason_title}`,
-            description: reason.reason_text,
-            value: reason.id,
-        }
-        options.push(selReason);
-    })
-    return {options};
+
+    const selectMenu = new SelectMenuBuilder()
+        .setCustomId('denial_interaction_reasons')
+        .setPlaceholder('Select a reason for denial')
+
+    await BpdasDatasource.getRepository(DenialReasons).find()
+        .then((res) => {
+            res.forEach((reason) => {
+                const menuOption = new SelectMenuOptionBuilder();
+
+                menuOption
+                    .setLabel(reason.reason_title)
+                    // .setDescription(reason.reason_title)
+                    .setValue(`denial_interaction_button_${reason.id.toString()}`);
+
+                selectMenu.addOptions(menuOption);
+            })
+        })
+
+    const selectDenialReason = new ActionRowBuilder().addComponents(selectMenu);
+    return selectDenialReason;
 }
 
 
@@ -174,7 +180,7 @@ const applicationButtonInteraction = (async (interaction, guildConfig) => { //in
                 await editButton(0, interaction);
                 break;
             case `apply_button_deny_${memberId}`:
-                await denyUser(memberId, guildConfig, interaction);
+                await getDenialReason(memberId, guildConfig, interaction);
                 //await editButton(1, interaction);
                 break;
             case `apply_button_spa_${memberId}`:
@@ -242,4 +248,4 @@ const editButton = async (res, interaction) => {
     //await interaction.deferUpdate();
 }
 
-module.exports = { acceptUser, denyUser, spaTimeUser, submitApplication, editButton, applicationButtonInteraction };
+module.exports = { acceptUser, denyUser: getDenialReason, spaTimeUser, submitApplication, editButton, applicationButtonInteraction };

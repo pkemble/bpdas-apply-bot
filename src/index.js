@@ -6,7 +6,7 @@ const { registerCommands, registerEvents } = require('./utils/registry');
 const BpdasDataSource = require('./typeorm/BpdasDatasource');
 const GuildConfiguration = require('./typeorm/entities/GuildConfiguration');
 const { default: DiscordClient } = require('../client/client');
-const { applicationButtonInteraction } = require('./workflows/ApplicationWorkflow');
+const { applicationButtonInteraction, denyUser } = require('./workflows/ApplicationWorkflow');
 const { cleanSpas } = require('./utils/CleanSpasWorkflow');
 
 const client = new Client({
@@ -44,6 +44,9 @@ client.on('interactionCreate', (interaction) => {
 
       console.log('Application button clicked');
       applicationButtonInteraction(interaction, guildConfig);
+    }
+    if (interaction.customId.startsWith('denial_interaction_button_')) {
+      denyUser
     }
     if (interaction.customId.startsWith('cleanspas_')) {
       console.log('Spa cleaner button clicked')
