@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
-const { submitApplication } = require('../../ApplicationWorkflow');
+const { submitApplication } = require('../../workflows/ApplicationWorkflow');
 const BpdasDatasource = require('../../typeorm/BpdasDatasource');
 const ApplicationLog = require('../../typeorm/entities/ApplicationLog');
 const ApplicationForm = require('../../utils/structures/ApplicationForm');

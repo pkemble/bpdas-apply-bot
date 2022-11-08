@@ -1,4 +1,4 @@
-const { acceptUser } = require('../../ApplicationWorkflow');
+const { acceptUser } = require('../../workflows/ApplicationWorkflow');
 const BaseCommand = require('../../utils/structures/BaseCommand');
 const { SlashCommandBuilder } = require('discord.js')
 

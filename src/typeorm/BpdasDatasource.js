@@ -13,6 +13,7 @@ module.exports = BpdasDataSource = new DataSource({
         require('./entities/GuildConfiguration'),
         require('./entities/ApplicationQuestions'),
         require('./entities/ApplicationLog'),
+        require('./entities/DenialReasons'),
     ],
 })
 

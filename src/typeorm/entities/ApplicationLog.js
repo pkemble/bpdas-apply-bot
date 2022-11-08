@@ -18,7 +18,10 @@ module.exports = new EntitySchema({
         },
         application_date: {
             type: "varchar",
-        }
+        },
+        result: {
+            type: "int",
+        },
     }
 })
 

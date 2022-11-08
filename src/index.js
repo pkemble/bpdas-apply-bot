@@ -6,7 +6,7 @@ const { registerCommands, registerEvents } = require('./utils/registry');
 const BpdasDataSource = require('./typeorm/BpdasDatasource');
 const GuildConfiguration = require('./typeorm/entities/GuildConfiguration');
 const { default: DiscordClient } = require('../client/client');
-const { applicationButtonInteraction } = require('./ApplicationWorkflow');
+const { applicationButtonInteraction } = require('./workflows/ApplicationWorkflow');
 const { cleanSpas } = require('./utils/CleanSpasWorkflow');
 
 const client = new Client({

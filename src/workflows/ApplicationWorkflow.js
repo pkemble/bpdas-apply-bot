@@ -1,5 +1,7 @@
-const { Client, Message, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, GuildMember, ChannelType, PermissionFlagsBits } = require("discord.js");
-const ApplicationForm = require('./utils/structures/ApplicationForm');
+const { Client, Message, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, GuildMember, ChannelType, PermissionFlagsBits, SelectMenuBuilder } = require("discord.js");
+const BpdasDatasource = require("../typeorm/BpdasDatasource");
+const DenialReasons = require("../typeorm/entities/DenialReasons");
+const ApplicationForm = require('../utils/structures/ApplicationForm');
 
 /**
  * 
@@ -32,7 +34,42 @@ const acceptUser = async (memberId, guildConfig, message) => {
 
 const denyUser = async (memberId, guildConfig, interaction) => {
     try {
+        //create an interaction
+        const memberApplicationChannel = await interaction.guild.channels.fetch(guildConfig.application_log_channel_id);
+        const buttonRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`denial_interaction_button_${memberId}`)
+                .setLabel('Deny Application')
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setCustomId('denial_interaction_cancel')
+                .setLabel('Cancel')
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+        const options = buildDenialReasons(memberId, guildConfig).then((response) => {console.log(response)});
+
+        const selectRow = new ActionRowBuilder().addComponents(
+            new SelectMenuBuilder()
+                .setCustomId('denial_interaction_reasons')
+                .setPlaceholder('Select a reason for denial')
+                .addOptions(options)
+        )
+
+        const embed = new EmbedBuilder()
+            .setColor(Colors.Red)
+            .setTitle(`Denying Applicant ${member}`)
+            .setDescription('This will deny the application for the selected reason. The user will be kicked from the server and receive a message with the reason given.');
+
+
+        await interaction.reply({
+            embeds: [embed],
+            components: [selectRow, buttonRow],
+        });
+
+        //act on the response
         const member = interaction.guild.members.cache.get(memberId);
+        const user = member.user.send()
         member.kick({ reason: guildConfig.ban_reason })
         console.log(`denying ${member}`)
 
@@ -41,6 +78,21 @@ const denyUser = async (memberId, guildConfig, interaction) => {
 
     }
 }
+
+const buildDenialReasons = async (memberId, guildConfig) => {
+    const denialReasons = await BpdasDatasource.getRepository(DenialReasons).find();
+    let options = []
+    denialReasons.forEach((reason) => {
+        const selReason = {
+            label: `denial_interaction_reason_${reason.reason_title}`,
+            description: reason.reason_text,
+            value: reason.id,
+        }
+        options.push(selReason);
+    })
+    return {options};
+}
+
 
 const spaTimeUser = async (memberId, guildConfig, interaction) => {
     try {
@@ -73,7 +125,7 @@ const spaTimeUser = async (memberId, guildConfig, interaction) => {
 const submitApplication = async (client, interaction, applicationForm) => {
 
     try {
-//        const applicant = client.users.cache.get(message.author.id);
+        //        const applicant = client.users.cache.get(message.author.id);
         const guildConfig = client.configs.find(c => c.guild_id == interaction.guildId)
         const memberApplicationChannelId = guildConfig.application_log_channel_id;
         if (memberApplicationChannelId) {
@@ -113,7 +165,7 @@ const submitApplication = async (client, interaction, applicationForm) => {
 }
 
 
-const applicationButtonInteraction = ( async (interaction, guildConfig) => { //interaction.commandName 'apply', 
+const applicationButtonInteraction = (async (interaction, guildConfig) => { //interaction.commandName 'apply', 
     try {
         const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
         switch (interaction.customId) {
@@ -123,7 +175,7 @@ const applicationButtonInteraction = ( async (interaction, guildConfig) => { //i
                 break;
             case `apply_button_deny_${memberId}`:
                 await denyUser(memberId, guildConfig, interaction);
-                await editButton(1, interaction);
+                //await editButton(1, interaction);
                 break;
             case `apply_button_spa_${memberId}`:
                 await spaTimeUser(memberId, guildConfig, interaction);
