@@ -34,7 +34,7 @@ const acceptUser = async (memberId, guildConfig, message) => {
 
 const getDenialReason = async (memberId, guildConfig, interaction) => {
     try {
-        const member = interaction.guild.members.cache.get(memberId);
+        const member = await interaction.guild.members.fetch(memberId);
 
         //create an interaction
         const memberApplicationChannel = await interaction.guild.channels.fetch(guildConfig.application_log_channel_id);
@@ -54,8 +54,8 @@ const getDenialReason = async (memberId, guildConfig, interaction) => {
 
         const embed = new EmbedBuilder()
             .setColor(Colors.Red)
-            .setTitle(`Denying Applicant ${member}`)
-            .setDescription('This will deny the application for the selected reason. The user will be kicked from the server and receive a message with the reason given.');
+            .setTitle(`Denying Application`)
+            .setDescription(`This will deny ${member}'s application for the selected reason below. The user will be kicked from the server and receive a DM with the reason given.\nAnother message with the text will be sent to ${memberApplicationChannel}`);
 
         await interaction.reply({
             embeds: [embed],
@@ -70,6 +70,9 @@ const getDenialReason = async (memberId, guildConfig, interaction) => {
 
 const denyUser = async (interaction) => {   
     //get memberId, etc...
+    // this is an awful way to get a member for the application but there is no better way to track it.
+    //const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
+    const memberId = interaction.customId;
     const user = member.user.send()
     member.kick({ reason: guildConfig.ban_reason })
     console.log(`denying ${member}`)
@@ -89,7 +92,7 @@ const buildDenialReasons = async (memberId, guildConfig) => {
                 menuOption
                     .setLabel(reason.reason_title)
                     // .setDescription(reason.reason_title)
-                    .setValue(`denial_interaction_button_${reason.id.toString()}`);
+                    .setValue(`denial_interaction_selection_${reason.id.toString()}`);
 
                 selectMenu.addOptions(menuOption);
             })
@@ -161,6 +164,7 @@ const submitApplication = async (client, interaction, applicationForm) => {
                     // content: finishedApplication,
                     components: [row],
                     embeds: [embed],
+                    customId: memberId,
                 });
             }
         }
@@ -173,7 +177,8 @@ const submitApplication = async (client, interaction, applicationForm) => {
 
 const applicationButtonInteraction = (async (interaction, guildConfig) => { //interaction.commandName 'apply', 
     try {
-        const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
+        //const memberId = interaction.message.embeds[0].data.description.match(/\@([0-9]*?)\>/)[1]
+        const memberId = interaction.message.customId;
         switch (interaction.customId) {
             case `apply_button_accept_${memberId}`:
                 await acceptUser(memberId, guildConfig, interaction);
@@ -248,4 +253,4 @@ const editButton = async (res, interaction) => {
     //await interaction.deferUpdate();
 }
 
-module.exports = { acceptUser, denyUser: getDenialReason, spaTimeUser, submitApplication, editButton, applicationButtonInteraction };
+module.exports = { acceptUser, denyUser, getDenialReason, spaTimeUser, submitApplication, editButton, applicationButtonInteraction };

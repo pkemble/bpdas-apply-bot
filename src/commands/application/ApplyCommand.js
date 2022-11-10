@@ -4,14 +4,14 @@ const BaseCommand = require('../../utils/structures/BaseCommand');
 const ApplicationForm = require('../../utils/structures/ApplicationForm');
 const { submitApplication } = require('../../workflows/ApplicationWorkflow');
 const { SlashCommandBuilder } = require('discord.js');
-const client = null;
+
 let answers = [];
 
 module.exports = class ApplyCommand extends BaseCommand {
   constructor() {
     super('apply', 'application', []);
   }
-  
+
   getSlashCommandJSON() {
     return new SlashCommandBuilder()
       .setName(this.name)
@@ -23,17 +23,13 @@ module.exports = class ApplyCommand extends BaseCommand {
   async run(client, interaction) {
     if (interaction.member.user.bot) return;
     this.client = client;
-    //const guildConfig = client.getCurrentConfig(message.guildId);
-    const guildConfig = client.configs.find(c => c.guild_id == interaction.guildId);
     const intro = guildConfig.introduction_text;
     const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
     const guildApplicationQuestions = await questionRepo.find();
     client.applicationQuestions = guildApplicationQuestions;
     const questions = client.applicationQuestions; //redundant...
-    //const appDm = await client.users.cache.get(interaction.author.id).send(intro);
-//can we do this instead?
-const appDm = await interaction.member.user.send(intro);
+    const appDm = await interaction.member.user.send(intro);
     await this.interrogate(0, questions, appDm, interaction, applicationOutro)
 
   }
@@ -42,6 +38,7 @@ const appDm = await interaction.member.user.send(intro);
     const question = questions[i].question;
     const applicationForm = new ApplicationForm();
     applicationForm.applicantId = interaction.member.user.id;
+
     const filter = m => m.author.id === applicationForm.applicantId;
 
     await appDm.channel.send(question).then(async () => {

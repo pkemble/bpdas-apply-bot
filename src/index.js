@@ -1,7 +1,7 @@
 
 require('dotenv').config();
 //import 'reflect-metadata';
-const { Client, GatewayIntentBits, InteractionCollector, Routes, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, InteractionCollector, Routes, Collection, Embed, EmbedBuilder } = require('discord.js');
 const { registerCommands, registerEvents } = require('./utils/registry');
 const BpdasDataSource = require('./typeorm/BpdasDatasource');
 const GuildConfiguration = require('./typeorm/entities/GuildConfiguration');
@@ -20,7 +20,7 @@ const client = new Client({
   ]
 });
 
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate', async (interaction) => {
 
   const guildConfig = client.configs.find(c => c.guild_id == interaction.guildId);
 
@@ -33,9 +33,19 @@ client.on('interactionCreate', (interaction) => {
     if (cmd) {
       cmd.run(client, interaction);
     } else {
-      interaction.reply({ content: `This command is ignoring you (no run method).` });
+      await interaction.reply({ content: `This command is ignoring you (no run method).` });
     }
   }
+  
+  //TODO could / should something be done here? Interaction fails if this goes uncaught.
+  if (interaction.isSelectMenu()) {
+    const footer = new EmbedBuilder().setFooter({
+      text: 'Confirmation is just a button click away...'
+    })
+    interaction.message.embeds[0].data.footer = footer
+    await interaction.message.edit({embeds: [interaction.message.embeds[0]]});
+  }
+
   if (interaction.isButton()) {
     //const { commandName } = interaction;
     //there has to be a better way to do this, but i need to grab the type of interaction based on the button clicked.
@@ -44,9 +54,6 @@ client.on('interactionCreate', (interaction) => {
 
       console.log('Application button clicked');
       applicationButtonInteraction(interaction, guildConfig);
-    }
-    if (interaction.customId.startsWith('denial_interaction_button_')) {
-      denyUser
     }
     if (interaction.customId.startsWith('cleanspas_')) {
       console.log('Spa cleaner button clicked')
