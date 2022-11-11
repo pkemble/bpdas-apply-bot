@@ -1,55 +1,79 @@
+const { User } = require("discord.js");
 const BpdasDatasource = require("../../typeorm/BpdasDatasource");
 const ApplicationLog = require("../../typeorm/entities/ApplicationLog");
 
 module.exports = class ApplicationForm {
     constructor(applicantId) {
         this.applicantId = applicantId;
+        this.guildId = '';
         this.date = Date.now();
         this.answers = [];
         this.readableApp = '';
-
-
-        // constructor(member, applicationQuestions, applicationDate) {
-        //     this.member = member;
-        //     this.applicationQuestions = JSON.parse(applicationQuestions);
-        //     this.applicationDate = applicationDate;
-        //     this.formattedDate = new Date(applicationDate).toUTCString();
-            
-        // }
+        this.result = 0; // 0 = default (not started), 1 = pending, 2 = accepted, 3 = denied, 4 = spa time
+        this.forced = false;
     }
-
-    // set readableApp {
-    //     if(this.answers.length > 0){
-    //         this.answers.forEach(a => {
-    //             finishedApplication += `**${a.question}:** \n${a.answer}\n\n`
-    //             let que = a.question, ans = a.answer.content;
-    //             applicationForm.addAnswer({ question: que, answer: ans });
-    //             applicationForm.readableApp = finishedApplication;
-    //           });
-    //     }
-    // }
 
     addAnswer(qaObj) {
         this.answers.push(qaObj)
     }
 
-    async saveToDatabase() {
+    /**
+     * Gets the application from the database
+     * @param {User} user 
+     */
+    async getFromDatabase(user) {
+        const appLogs = BpdasDatasource.getRepository(ApplicationLog);
+
         try {
-            const dataSource = BpdasDatasource.getRepository(ApplicationLog);
-            await dataSource.createQueryBuilder()
-                .insert()
-                .into(ApplicationLog)
-                .values([
-                    {
-                        user_id: this.applicantId,
-                        application_text: JSON.stringify(this.answers),
-                        application_date: this.date,
-                    }
-                ]).execute();
-        } catch (error) {
-            console.log(error);
-            return;
+            const dbApp = await appLogs.findOne({
+                where: { user_id: user.id },
+                order: { application_date: 'DESC' },
+            })
+
+            const qaArray = JSON.parse(dbApp.application_text);
+            this.applicantId = dbApp.user_id;
+            this.guildId = dbApp.guild_id;
+            this.date = dbApp.application_date;
+            this.answers = qaArray;
+            this.result = dbApp.result;
+            let readableApp = `${user} has submitted the following application: \n`;
+            for (var qa in qaArray) {
+                readableApp += `**${qaArray[qa].question}:** \n${qaArray[qa].answer}\n\n`
+            };
+
+            this.readableApp = readableApp;
+
+            return this;
+        } catch (err) {
+            console.log(`Problem retrieving application for user ${user.username} with id: ${user.id}`)
         }
-        console.log(`Saved ${this.applicantId}'s application` );
+    }
+
+    async saveToDatabase() {
+        const dataSource = BpdasDatasource.getRepository(ApplicationLog);
+        var application = await dataSource.findOneBy({ user_id: this.applicantId })
+
+        try {
+            if (!application) {
+                application = {
+                    user_id: this.applicantId,
+                    guild_id: this.guildId,
+                    application_date: this.date,
+                    application_text: JSON.stringify(this.answers),
+                    result: this.result,
+                    forced: this.forced,
+                }
+                await dataSource.upsert(application, ['user_id']);
+
+            } else {
+                application.application_text = JSON.stringify(this.answers);
+                application.result = this.result;
+                await dataSource.update(application.id, application);
+            }
+
+        } catch (error) {
+            console.log(error)
+        }
+        console.log(`Updated ${this.applicantId}'s application`);
     }
 }

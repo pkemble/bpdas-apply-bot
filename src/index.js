@@ -36,6 +36,9 @@ client.on('interactionCreate', (interaction) => {
       interaction.reply({ content: `This command is ignoring you (no run method).` });
     }
   }
+  if (interaction.isSelectMenu()){
+    denyUser(interaction);
+  }
   if (interaction.isButton()) {
     //const { commandName } = interaction;
     //there has to be a better way to do this, but i need to grab the type of interaction based on the button clicked.
@@ -46,7 +49,7 @@ client.on('interactionCreate', (interaction) => {
       applicationButtonInteraction(interaction, guildConfig);
     }
     if (interaction.customId.startsWith('denial_interaction_button_')) {
-      denyUser
+      denyUser(interaction);
     }
     if (interaction.customId.startsWith('cleanspas_')) {
       console.log('Spa cleaner button clicked')

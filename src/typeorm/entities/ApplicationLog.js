@@ -12,6 +12,9 @@ module.exports = new EntitySchema({
         user_id: {
             type: "varchar",
         },
+        guild_id: {
+            type: "varchar",
+        },
         application_text: {
             type: "varchar",
             length: "2048",
@@ -21,7 +24,12 @@ module.exports = new EntitySchema({
         },
         result: {
             type: "int",
+            default: 0,
         },
+        forced: {
+            type: "bool",
+            default: false,
+        }
     }
 })
 

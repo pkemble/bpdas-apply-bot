@@ -11,12 +11,12 @@ module.exports = class ApplyCommand extends BaseCommand {
   constructor() {
     super('apply', 'application', []);
   }
-  
+
   getSlashCommandJSON() {
     return new SlashCommandBuilder()
       .setName(this.name)
       .setDescription('Apply to the BPDAS Server')
-      // .addUserOption((option) => option.setName('user').setDescription('Tagged target user').setRequired(true))
+      .addUserOption((option) => option.setName('user').setDescription('Tagged target user').setRequired(false))
       .toJSON();
   }
 
@@ -29,19 +29,46 @@ module.exports = class ApplyCommand extends BaseCommand {
     const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
     const guildApplicationQuestions = await questionRepo.find();
-    client.applicationQuestions = guildApplicationQuestions;
-    const questions = client.applicationQuestions; //redundant...
-    //const appDm = await client.users.cache.get(interaction.author.id).send(intro);
-//can we do this instead?
-const appDm = await interaction.member.user.send(intro);
-    await this.interrogate(0, questions, appDm, interaction, applicationOutro)
 
+    //establish the applicant
+    var member = {}; //ugh
+    var forced = false;
+    if (interaction.options.data.length > 0) {
+      member = interaction.options.data[0].user;
+      forced = true;
+    } else {
+      member = interaction.member;
+    }
+
+    //find a duplicate application in process
+    const applicationForm = new ApplicationForm();
+    await applicationForm.getFromDatabase(member.id);
+
+    if (applicationForm && applicationForm.result > 0 && !forced) {
+      interaction.reply("There's already an application for you in process, or you were kicked from the server. Please check your DMs. If this is a mistake, please tell a moderator");
+      console.log(`${member} tried to apply more than once.`)
+    } else {
+      try {
+              const appDm = await member.send(intro);
+      applicationForm.applicantId = member.id;
+      applicationForm.result = 1; //pending. enums would be nice
+      applicationForm.forced = forced;
+      applicationForm.guildId = interaction.guild.id;
+      //clear the answers in the application if forced
+      if(forced) { applicationForm.answers = [] };
+      await applicationForm.saveToDatabase();
+      forced ? await interaction.reply(`An application was DM'd to ${member}.`) : await interaction.reply("A DM was sent to you. Thanks for applying!");
+      await this.interrogate(0, guildApplicationQuestions, appDm, member, applicationForm, applicationOutro)
+      } catch (error) {
+        console.log(error);
+        interaction.reply(`Looks like ${member} isn't here anymore...`);
+      }
+
+    }
   }
 
-  async interrogate(i, questions, appDm, interaction, applicationOutro) {
+  async interrogate(i, questions, appDm, member, applicationForm, applicationOutro) {
     const question = questions[i].question;
-    const applicationForm = new ApplicationForm();
-    applicationForm.applicantId = interaction.member.user.id;
     const filter = m => m.author.id === applicationForm.applicantId;
 
     await appDm.channel.send(question).then(async () => {
@@ -51,28 +78,26 @@ const appDm = await interaction.member.user.send(intro);
           max: 1,
           time: 60_000 * 60 * 24,
           errors: ['application timed out']
-        }).then((collected) => {
+        }).then(async (collected) => {
           answers.push({
             question: questions[i].question,
             answer: collected.first(),
           });
           if (i === questions.length - 1) {
             appDm.channel.send(applicationOutro);
-            let finishedApplication = `${interaction.member.user} has submitted the following application: \n`;
-            answers.forEach(a => {
+            let finishedApplication = `${member} has submitted the following application: \n`;
+            answers.forEach(async a => {
               finishedApplication += `**${a.question}:** \n${a.answer}\n\n`
               let que = a.question, ans = a.answer.content;
               applicationForm.addAnswer({ question: que, answer: ans });
               applicationForm.readableApp = finishedApplication;
             });
-
-            applicationForm.saveToDatabase();
-            submitApplication(this.client, interaction, applicationForm);
-            answers = [] //for some reason these are persisting. maybe collector related.
+            submitApplication(this.client, member, applicationForm);
             return;
+
           } else {
             i++;
-            this.interrogate(i, questions, appDm, interaction, applicationOutro)
+            this.interrogate(i, questions, appDm, member, applicationForm, applicationOutro)
           }
         }).catch((err) => {
           console.log(err);
