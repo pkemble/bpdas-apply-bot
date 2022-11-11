@@ -4,7 +4,7 @@ const BaseCommand = require('../../utils/structures/BaseCommand');
 const ApplicationForm = require('../../utils/structures/ApplicationForm');
 const { submitApplication } = require('../../workflows/ApplicationWorkflow');
 const { SlashCommandBuilder } = require('discord.js');
-
+const client = null;
 let answers = [];
 
 module.exports = class ApplyCommand extends BaseCommand {
@@ -24,6 +24,8 @@ module.exports = class ApplyCommand extends BaseCommand {
   async run(client, interaction) {
     if (interaction.member.user.bot) return;
     this.client = client;
+    //const guildConfig = client.getCurrentConfig(message.guildId);
+    const guildConfig = client.configs.find(c => c.guild_id == interaction.guildId);
     const intro = guildConfig.introduction_text;
     const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
