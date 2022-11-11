@@ -9,6 +9,9 @@ module.exports = new EntitySchema({
             type: "int",
             generated: true
         },
+        guild_id: {
+            type: "varchar",
+        },
         reason_title: {
             type: "text"
         },

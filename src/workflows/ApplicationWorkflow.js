@@ -38,7 +38,6 @@ async function acceptUser(memberId, guildConfig, message) {
 
 const getDenialReason = async (memberId, guildConfig, interaction) => {
     try {
-
         const member = await interaction.guild.members.fetch(memberId);
         const selectMenuRow = await buildDenialReasons(memberId, guildConfig);
 
@@ -53,6 +52,14 @@ const getDenialReason = async (memberId, guildConfig, interaction) => {
         });
 
     } catch (err) {
+        const errorEmbed = new EmbedBuilder().setColor(Colors.NotQuiteBlack).setDescription(err.message).setTitle("Discord says...");
+        interaction.channel.send({
+            components: [],
+            embeds: [errorEmbed],
+        })
+        interaction.message.edit({
+            components: [],
+        })
         console.log(err)
     }
 }
@@ -133,7 +140,7 @@ const denyUser = async (interaction) => {
     }
 }
 
-const buildDenialReasons = async (memberId) => {
+const buildDenialReasons = async (memberId, guildConfig) => {
 
     const selectMenu = new SelectMenuBuilder()
         .setCustomId(memberId)
@@ -141,7 +148,9 @@ const buildDenialReasons = async (memberId) => {
         .setMaxValues(1)
         .setMinValues(1)
 
-    await BpdasDatasource.getRepository(DenialReasons).find()
+    await BpdasDatasource.getRepository(DenialReasons).find({
+        where: { guild_id: guildConfig.guild_id }
+    })
         .then((res) => {
             res.forEach((reason) => {
                 const menuOption = new SelectMenuOptionBuilder();

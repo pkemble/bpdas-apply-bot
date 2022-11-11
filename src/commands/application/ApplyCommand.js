@@ -24,12 +24,13 @@ module.exports = class ApplyCommand extends BaseCommand {
   async run(client, interaction) {
     if (interaction.member.user.bot) return;
     this.client = client;
-    //const guildConfig = client.getCurrentConfig(message.guildId);
     const guildConfig = client.configs.find(c => c.guild_id == interaction.guildId);
     const intro = guildConfig.introduction_text;
     const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
-    const guildApplicationQuestions = await questionRepo.find();
+    const guildApplicationQuestions = await questionRepo.find({
+      where: { guild_id: guildConfig.guildId }
+    });
 
     //establish the applicant
     var member = {}; //ugh
