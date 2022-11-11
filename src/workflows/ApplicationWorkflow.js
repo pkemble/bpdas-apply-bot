@@ -223,6 +223,7 @@ const submitApplication = async (client, member, applicationForm) => {
                     // content: finishedApplication,
                     components: [row],
                     embeds: [embed],
+                    customId: memberId,
                 });
             }
         }

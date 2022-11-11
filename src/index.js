@@ -1,7 +1,7 @@
 
 require('dotenv').config();
 //import 'reflect-metadata';
-const { Client, GatewayIntentBits, InteractionCollector, Routes, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, InteractionCollector, Routes, Collection, Embed, EmbedBuilder } = require('discord.js');
 const { registerCommands, registerEvents } = require('./utils/registry');
 const BpdasDataSource = require('./typeorm/BpdasDatasource');
 const GuildConfiguration = require('./typeorm/entities/GuildConfiguration');
@@ -20,7 +20,7 @@ const client = new Client({
   ]
 });
 
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate', async (interaction) => {
 
   const guildConfig = client.configs.find(c => c.guild_id == interaction.guildId);
 
@@ -33,7 +33,7 @@ client.on('interactionCreate', (interaction) => {
     if (cmd) {
       cmd.run(client, interaction);
     } else {
-      interaction.reply({ content: `This command is ignoring you (no run method).` });
+      await interaction.reply({ content: `This command is ignoring you (no run method).` });
     }
   }
   if (interaction.isSelectMenu()){
