@@ -43,23 +43,25 @@ module.exports = class ApplyCommand extends BaseCommand {
 
     //find a duplicate application in process
     const applicationForm = new ApplicationForm();
-    await applicationForm.getFromDatabase(member.id);
+    await applicationForm.getFromDatabase(member.user);
 
     if (applicationForm && applicationForm.result > 0 && !forced) {
       interaction.reply("There's already an application for you in process, or you were kicked from the server. Please check your DMs. If this is a mistake, please tell a moderator");
       console.log(`${member} tried to apply more than once.`)
     } else {
+      //TODO
+      // Make sure questions exist
       try {
-              const appDm = await member.send(intro);
-      applicationForm.applicantId = member.id;
-      applicationForm.result = 1; //pending. enums would be nice
-      applicationForm.forced = forced;
-      applicationForm.guildId = interaction.guild.id;
-      //clear the answers in the application if forced
-      if(forced) { applicationForm.answers = [] };
-      await applicationForm.saveToDatabase();
-      forced ? await interaction.reply(`An application was DM'd to ${member}.`) : await interaction.reply("A DM was sent to you. Thanks for applying!");
-      await this.interrogate(0, guildApplicationQuestions, appDm, member, applicationForm, applicationOutro)
+        const appDm = await member.send(intro);
+        applicationForm.applicantId = member.id;
+        applicationForm.result = 1; //pending. enums would be nice
+        applicationForm.forced = forced;
+        applicationForm.guildId = interaction.guild.id;
+        //clear the answers in the application if forced
+        if (forced) { applicationForm.answers = [] };
+        await applicationForm.saveToDatabase();
+        forced ? await interaction.reply(`An application was DM'd to ${member}.`) : await interaction.reply("A DM was sent to you. Thanks for applying!");
+        await this.interrogate(0, guildApplicationQuestions, appDm, member, applicationForm, applicationOutro)
       } catch (error) {
         console.log(error);
         interaction.reply(`Looks like ${member} isn't here anymore...`);

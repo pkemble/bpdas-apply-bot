@@ -11,7 +11,10 @@ module.exports = new EntitySchema({
         },
         question : {
             type : "text"
-        }
+        },
+        guild_id: {
+            type: "varchar"
+        },
     }
     
 })
