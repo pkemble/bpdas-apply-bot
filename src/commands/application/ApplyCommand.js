@@ -29,7 +29,7 @@ module.exports = class ApplyCommand extends BaseCommand {
     const intro = guildConfig.introduction_text;
     const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
-    const guildApplicationQuestions = await questionRepo.find();
+    const guildApplicationQuestions = await questionRepo.find({ where: {guild_id: guildConfig.guildId }});
 
     //establish the applicant
     var member = {}; //ugh
