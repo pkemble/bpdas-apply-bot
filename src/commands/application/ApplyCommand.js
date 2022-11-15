@@ -45,7 +45,7 @@ module.exports = class ApplyCommand extends BaseCommand {
     const applicationForm = new ApplicationForm();
     await applicationForm.getFromDatabase(member.user);
 
-    if (applicationForm && applicationForm.result > 0 && !forced) {
+    if (applicationForm.result > 0 && !forced) {
       interaction.reply("There's already an application for you in process, or you were kicked from the server. Please check your DMs. If this is a mistake, please tell a moderator");
       console.log(`${member} tried to apply more than once.`)
     } else {
