@@ -44,8 +44,8 @@ module.exports = class ApplyCommand extends BaseCommand {
 
     //find a duplicate application in process
     const applicationForm = new ApplicationForm();
-    await applicationForm.getFromDatabase(member.id);
-
+    await applicationForm.getFromDatabase(member);
+    console.log(applicationForm);
     if (applicationForm && applicationForm.result > 0 && !forced) {
       interaction.reply("There's already an application for you in process, or you were kicked from the server. Please check your DMs. If this is a mistake, please tell a moderator");
       console.log(`${member} tried to apply more than once.`)
@@ -56,6 +56,7 @@ module.exports = class ApplyCommand extends BaseCommand {
         applicationForm.result = 1; //pending. enums would be nice
         applicationForm.forced = forced;
         applicationForm.guildId = interaction.guild.id;
+        applicationForm.date = Date.now();
         //clear the answers in the application if forced
         if (forced) { applicationForm.answers = [] };
         await applicationForm.saveToDatabase();

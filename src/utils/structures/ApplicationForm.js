@@ -30,6 +30,10 @@ module.exports = class ApplicationForm {
                 order: { application_date: 'DESC' },
             })
 
+            if (dbApp === null) {
+                console.log(`No Application exists for ${user.username}.`)
+                return this;
+            }
             const qaArray = JSON.parse(dbApp.application_text);
             this.applicantId = dbApp.user_id;
             this.guildId = dbApp.guild_id;
