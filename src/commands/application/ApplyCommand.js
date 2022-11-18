@@ -29,7 +29,7 @@ module.exports = class ApplyCommand extends BaseCommand {
     const intro = guildConfig.introduction_text;
     const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
-    const guildApplicationQuestions = await questionRepo.find({ where: {guild_id: guildConfig.guildId }});
+    const guildApplicationQuestions = await questionRepo.find({ where: { guild_id: guildConfig.guildId } });
 
     //establish the applicant
     var member = {}; //ugh
@@ -58,13 +58,17 @@ module.exports = class ApplyCommand extends BaseCommand {
         applicationForm.forced = forced;
         applicationForm.guildId = interaction.guild.id;
         //clear the answers in the application if forced
-        if (forced) { applicationForm.answers = [] };
+        if (forced) {
+          applicationForm.answers = [];
+          await interaction.reply(`An application was DM'd to ${member}.`)
+        } else {
+          await interaction.reply("A DM was sent to you. Thanks for applying!");
+        };
         await applicationForm.saveToDatabase();
-        forced ? await interaction.reply(`An application was DM'd to ${member}.`) : await interaction.reply("A DM was sent to you. Thanks for applying!");
         await this.interrogate(0, guildApplicationQuestions, appDm, member, applicationForm, applicationOutro)
       } catch (error) {
         console.log(error);
-        interaction.reply(`Looks like ${member} isn't here anymore...`);
+        interaction !== undefined ? interaction.reply(`Looks like ${member} isn't here anymore...`) : console.log('no interaction');
       }
 
     }
