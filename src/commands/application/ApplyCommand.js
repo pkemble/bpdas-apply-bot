@@ -67,7 +67,7 @@ module.exports = class ApplyCommand extends BaseCommand {
         await this.interrogate(0, guildApplicationQuestions, appDm, member, applicationForm, applicationOutro)
       } catch (error) {
         console.log(error);
-        interaction !== undefined ? interaction.reply(`Looks like ${member} isn't here anymore...`) : console.log('no interaction');
+        // interaction !== undefined ? interaction.reply(`Looks like ${member} isn't here anymore...`) : console.log('no interaction');
       }
 
     }
