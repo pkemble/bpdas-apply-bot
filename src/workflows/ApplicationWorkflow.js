@@ -131,6 +131,7 @@ const denyUser = async (interaction) => {
                     deniedCompleteEmbed,
                 ],
             })
+            console.log(`${member.username} : ${member.id} was kicked from the server by:\n${interaction.member} for ${denialReason.reason_title}\n`)
         }
     } catch (error) {
         interaction.channel.send({
@@ -327,7 +328,7 @@ const editButton = async (res, interaction) => {
         default:
             break;
     }
-    console.log(`Updating interaction based on the moderartor response of ${res}`)
+    console.log(`Updating application based on the moderator response of ${res}`)
     await interaction.message.edit(options);
 }
 
