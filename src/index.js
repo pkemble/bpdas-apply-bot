@@ -28,7 +28,7 @@ client.on('interactionCreate', (interaction) => {
     const { commandName } = interaction;
     const cmd = client.slashCommands.get(commandName);
 
-    console.log(commandName);
+    console.log(`InteractionCreate was caught by Discord with the command: ${commandName}`,);
 
     if (cmd) {
       cmd.run(client, interaction);
@@ -45,7 +45,7 @@ client.on('interactionCreate', (interaction) => {
     //right now this will come from the button's 'customId' property.
     if (interaction.customId.startsWith('apply_button_')) {
 
-      console.log('Application button clicked');
+      console.log('Application button clicked (Accept / Deny / Spa Time)');
       applicationButtonInteraction(interaction, guildConfig);
     }
     if (interaction.customId.startsWith('denial_interaction_button_')) {
@@ -59,6 +59,9 @@ client.on('interactionCreate', (interaction) => {
 })
 
 async function main() {
+  console.log(`============= Starting BPDAS Application Bot =============`);
+  console.log(`: Using Database ${process.env.DB_DATABASE}`);
+  console.log(`: Discord App ID: ${process.env.DJS_APP_ID}`);
   client.slashCommands = new Collection();
   client.commands = new Map();
   client.events = new Map();
@@ -82,8 +85,10 @@ async function main() {
         body: [...slashCommandsJson],
       });
       const registeredSlashCommands = await client.rest.get(Routes.applicationGuildCommands(process.env.DJS_APP_ID, conf.guild_id))
-      console.log(`Registered the following commands for ${conf.guild_id}`);
-      console.log(registeredSlashCommands);
+      console.log(`---- Registered the following commands for ${conf.guild_id} ----`);
+      registeredSlashCommands.forEach(cmd => {
+        console.log(`: /${cmd.name} - ${cmd.description}`);
+      });
     } catch (error) {
       console.log(error);
     }

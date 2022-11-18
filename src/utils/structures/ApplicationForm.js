@@ -33,23 +33,24 @@ module.exports = class ApplicationForm {
             if (dbApp === null) {
                 console.log(`No Application exists for ${user.username}.`)
                 return this;
+            } else {
+                const qaArray = JSON.parse(dbApp.application_text);
+                this.applicantId = dbApp.user_id;
+                this.guildId = dbApp.guild_id;
+                this.date = dbApp.application_date;
+                this.answers = qaArray;
+                this.result = dbApp.result;
+                let readableApp = `${user.username} has submitted the following application: \n`;
+                for (var qa in qaArray) {
+                    readableApp += `**${qaArray[qa].question}:** \n${qaArray[qa].answer}\n\n`
+                };
+    
+                this.readableApp = readableApp;
+                console.log(`I found an application with the ID of ${dbApp.id} for user with ID: ${dbApp.user_id}`)
+                return this;
             }
-            const qaArray = JSON.parse(dbApp.application_text);
-            this.applicantId = dbApp.user_id;
-            this.guildId = dbApp.guild_id;
-            this.date = dbApp.application_date;
-            this.answers = qaArray;
-            this.result = dbApp.result;
-            let readableApp = `${user} has submitted the following application: \n`;
-            for (var qa in qaArray) {
-                readableApp += `**${qaArray[qa].question}:** \n${qaArray[qa].answer}\n\n`
-            };
-
-            this.readableApp = readableApp;
-
-            return this;
         } catch (err) {
-            console.log(`Problem retrieving application for user ${user.username} with id: ${user.id}`)
+            console.log(`** Problem retrieving application for user ${user.username} with id: ${user.id} **`)
         }
     }
 
@@ -68,16 +69,17 @@ module.exports = class ApplicationForm {
                     forced: this.forced,
                 }
                 await dataSource.upsert(application, ['user_id']);
+                console.log(`Application for ID ${this.applicantId} was upsert'd to the database.`)
 
             } else {
                 application.application_text = JSON.stringify(this.answers);
                 application.result = this.result;
                 await dataSource.update(application.id, application);
+                console.log(`Application for ID ${this.applicantId} was updated in the database.`)
             }
 
         } catch (error) {
-            console.log(error)
+            console.log(`****\nError saving application for ${this.applicantId}\n****\n${error}\n****`)
         }
-        console.log(`Updated ${this.applicantId}'s application`);
     }
 }

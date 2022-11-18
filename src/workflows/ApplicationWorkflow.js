@@ -141,12 +141,9 @@ const denyUser = async (interaction) => {
 }
 
 const buildDenialReasons = async (memberId, guildConfig) => {
-
     const selectMenu = new SelectMenuBuilder()
         .setCustomId(memberId)
         .setPlaceholder('Select a reason for denial')
-        .setMaxValues(1)
-        .setMinValues(1)
 
     await BpdasDatasource.getRepository(DenialReasons).find({
         where: { guild_id: guildConfig.guild_id }
@@ -154,12 +151,10 @@ const buildDenialReasons = async (memberId, guildConfig) => {
         .then((res) => {
             res.forEach((reason) => {
                 const menuOption = new SelectMenuOptionBuilder();
-
                 menuOption
                     .setLabel(reason.reason_title)
                     // .setDescription(reason.reason_title)
                     .setValue(reason.id.toString());
-
                 selectMenu.addOptions(menuOption);
             })
         })
@@ -197,7 +192,7 @@ const spaTimeUser = async (memberId, guildConfig, interaction) => {
  * @param {Message} message 
  * @param {Array} answers 
  */
-const submitApplication = async (client, member, applicationForm) => {
+const submitApplication = async (client, user, applicationForm) => {
 
     try {
         //set the application to pending
@@ -233,11 +228,11 @@ const submitApplication = async (client, member, applicationForm) => {
                     components: [row],
                     embeds: [embed],
                 });
+                console.log(`A new application has appeared in #${memberApplicationChannel.name}`);
             }
         }
     } catch (err) {
-        console.log(err);
-    } finally {
+        console.log(`***\n${err}\n***`);
     }
 }
 
