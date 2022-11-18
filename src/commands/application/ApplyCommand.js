@@ -28,9 +28,7 @@ module.exports = class ApplyCommand extends BaseCommand {
     const intro = guildConfig.introduction_text;
     const applicationOutro = guildConfig.application_outro;
     const questionRepo = BpdasDataSource.getRepository(ApplicationQuestions);
-    const guildApplicationQuestions = await questionRepo.find({
-      where: { guild_id: guildConfig.guildId }
-    });
+    const guildApplicationQuestions = await questionRepo.find({ where: { guild_id: guildConfig.guildId } });
 
     //establish the applicant
     var member = {}; //ugh
@@ -44,27 +42,32 @@ module.exports = class ApplyCommand extends BaseCommand {
 
     //find a duplicate application in process
     const applicationForm = new ApplicationForm();
-    await applicationForm.getFromDatabase(member);
-    console.log(applicationForm);
-    if (applicationForm && applicationForm.result > 0 && !forced) {
+    await applicationForm.getFromDatabase(member.user);
+
+    if (applicationForm.result > 0 && !forced) {
       interaction.reply("There's already an application for you in process, or you were kicked from the server. Please check your DMs. If this is a mistake, please tell a moderator");
       console.log(`${member} tried to apply more than once.`)
     } else {
+      //TODO
+      // Make sure questions exist
       try {
         const appDm = await member.send(intro);
         applicationForm.applicantId = member.id;
         applicationForm.result = 1; //pending. enums would be nice
         applicationForm.forced = forced;
         applicationForm.guildId = interaction.guild.id;
-        applicationForm.date = Date.now();
         //clear the answers in the application if forced
-        if (forced) { applicationForm.answers = [] };
+        if (forced) {
+          applicationForm.answers = [];
+          await interaction.reply(`An application was DM'd to ${member}.`)
+        } else {
+          await interaction.reply("A DM was sent to you. Thanks for applying!");
+        };
         await applicationForm.saveToDatabase();
-        forced ? await interaction.reply(`An application was DM'd to ${member}.`) : await interaction.reply("A DM was sent to you. Thanks for applying!");
         await this.interrogate(0, guildApplicationQuestions, appDm, member, applicationForm, applicationOutro)
       } catch (error) {
         console.log(error);
-        await interaction.reply(`Looks like ${member} isn't here anymore...`);
+        interaction !== undefined ? interaction.reply(`Looks like ${member} isn't here anymore...`) : console.log('no interaction');
       }
 
     }

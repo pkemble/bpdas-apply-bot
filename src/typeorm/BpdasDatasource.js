@@ -8,7 +8,7 @@ module.exports = BpdasDataSource = new DataSource({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_DATABASE,
     port: process.env.DB_PORT,
-    synchronize: true,
+    synchronize: process.env.DB_SYNCHRONIZE,
     entities: [
         require('./entities/GuildConfiguration'),
         require('./entities/ApplicationQuestions'),
