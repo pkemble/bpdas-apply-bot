@@ -31,7 +31,7 @@ module.exports = class ApplicationForm {
             })
 
             if (dbApp === null) {
-                console.log(`No Application exists for ${user.username}.`)
+                console.log(`== DB Operation:\nNo Application exists for ${user.username}.\n==`)
                 return this;
             } else {
                 const qaArray = JSON.parse(dbApp.application_text);
@@ -46,11 +46,11 @@ module.exports = class ApplicationForm {
                 };
     
                 this.readableApp = readableApp;
-                console.log(`I found an application with the ID of ${dbApp.id} for user with ID: ${dbApp.user_id}`)
+                console.log(`== DB Operation:\nI found an application with the ID of ${dbApp.id} for user with ID: ${dbApp.user_id}\n==`)
                 return this;
             }
         } catch (err) {
-            console.log(`** Problem retrieving application for user ${user.username} with id: ${user.id} **`)
+            console.log(`== DB Operation:\n** Problem retrieving application for user ${user.username} with id: ${user.id} **\n==`)
         }
     }
 
@@ -69,17 +69,17 @@ module.exports = class ApplicationForm {
                     forced: this.forced,
                 }
                 await dataSource.upsert(application, ['user_id']);
-                console.log(`Application for ID ${this.applicantId} was upsert'd to the database.`)
+                console.log(`== DB Operation:\nApplication for ID ${this.applicantId} was upsert'd to the database.\n==`)
 
             } else {
                 application.application_text = JSON.stringify(this.answers);
                 application.result = this.result;
                 await dataSource.update(application.id, application);
-                console.log(`Application for ID ${this.applicantId} was updated in the database.`)
+                console.log(`== DB Operation:\nApplication for ID ${this.applicantId} was updated in the database.\n==`)
             }
 
         } catch (error) {
-            console.log(`****\nError saving application for ${this.applicantId}\n****\n${error}\n****`)
+            console.log(`== DB Operation:\n****\nError saving application for ${this.applicantId}\n****\n${error}\n****\n==`)
         }
     }
 }

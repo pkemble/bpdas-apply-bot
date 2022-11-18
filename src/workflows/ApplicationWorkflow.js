@@ -327,9 +327,8 @@ const editButton = async (res, interaction) => {
         default:
             break;
     }
-    console.log(`Updating interaction with message options\n${JSON.stringify(options)}`)
+    console.log(`Updating interaction based on the moderartor response of ${res}`)
     await interaction.message.edit(options);
-    //await interaction.deferUpdate();
 }
 
 module.exports = { acceptUser, denyUser, getDenialReason, spaTimeUser, submitApplication, editButton, applicationButtonInteraction };
