@@ -92,15 +92,16 @@ module.exports = class ApplyCommand extends BaseCommand {
         }).then(async (collected) => {
           answers.push({
             question: questions[i].question,
-            answer: collected.first(),
+            answer: collected.first().content,
           });
-          console.log(`${user.username} Answered:\n${questions[i].question}\n\n...with...\n\n${collected.first()}`);
+          console.log(`${user.username} reponsded:`)
+          console.table(answers[i]);
           if (i === questions.length - 1) {
             appDm.channel.send(applicationOutro);
             let finishedApplication = `${user} has submitted the following application: \n`;
             answers.forEach(async a => {
               finishedApplication += `**${a.question}:** \n${a.answer}\n\n`
-              let que = a.question, ans = a.answer.content;
+              let que = a.question, ans = a.answer;
               applicationForm.addAnswer({ question: que, answer: ans });
               applicationForm.readableApp = finishedApplication;
             });

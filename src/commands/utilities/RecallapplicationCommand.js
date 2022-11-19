@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, Colors, EmbedBuilder } = require('discord.js');
 const { submitApplication } = require('../../workflows/ApplicationWorkflow');
 const BpdasDatasource = require('../../typeorm/BpdasDatasource');
 const ApplicationLog = require('../../typeorm/entities/ApplicationLog');
@@ -24,8 +24,57 @@ module.exports = class RecallApplicationCommand extends BaseCommand {
       const user = message.options.data[0].user;
       const memberApp = new ApplicationForm();
       await memberApp.getFromDatabase(user);
-      submitApplication(client, user, memberApp); //TODO check this, user instead of member probably breaks this
-      await message.reply(`Retrieving **${user.username}'s** application`);
+      if (memberApp.applicantId === undefined) {
+        message.reply(`No appluication for ${user.username} exists...`)
+        return;
+      }
+      // const row = new ActionRowBuilder().setComponents(
+      //   new ButtonBuilder()
+      //     .setCustomId(`apply_button_accept_${applicationForm.applicantId}`)
+      //     .setLabel('accept')
+      //     .setStyle(ButtonStyle.Success),
+      //   new ButtonBuilder()
+      //     .setCustomId(`apply_button_deny_${applicationForm.applicantId}`)
+      //     .setLabel('deny')
+      //     .setStyle(ButtonStyle.Danger),
+      //   new ButtonBuilder()
+      //     .setCustomId(`apply_button_spa_${applicationForm.applicantId}`)
+      //     .setLabel('spa time')
+      //     .setStyle(ButtonStyle.Primary)
+      // );
+      let color = Colors.Yellow;
+      switch (memberApp.result) {
+        case 0: //not started - something went wrong
+          color = Colors.DarkButNotBlack;
+          break;
+        case 1: //pending
+          color = Colors.Yellow;
+          break;
+        case 2: //accepted
+          color = Colors.Green;
+          break;
+        case 3: //denied
+          color = Colors.Red;
+          break;
+        case 4: //spa time
+          color = Colors.DarkGold;
+          break;
+        default: //whatevs
+          color = Colors.Yellow;
+          break;
+      }
+
+      const embed = new EmbedBuilder()
+        .setColor(color)
+        .setDescription(memberApp.readableApp) //TODO moderator actions should go here
+
+      await message.reply({
+        // content: finishedApplication,
+        // components: [row],
+        embeds: [embed],
+      });
+      console.log(`Application for ${user.username} has been recalled by ${message.user.username} in #${memberApplicationChannel.name}`);
+
     } catch (error) {
       console.log(error)
     }

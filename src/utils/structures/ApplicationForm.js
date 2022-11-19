@@ -32,7 +32,7 @@ module.exports = class ApplicationForm {
 
             if (dbApp === null) {
                 console.log(`== DB Operation:\nNo Application exists for ${user.username}.\n==`)
-                return this;
+                return null; //TODO, fix this return bool or something
             } else {
                 const qaArray = JSON.parse(dbApp.application_text);
                 this.applicantId = dbApp.user_id;
