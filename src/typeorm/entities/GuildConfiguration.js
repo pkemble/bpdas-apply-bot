@@ -9,10 +9,10 @@ module.exports = new EntitySchema({
             type: "int",
             generated: true
         },
-        prefix: {
-            type: "varchar",
-            default: "/apply",
-        },
+        // prefix: {
+        //     type: "varchar",
+        //     default: "/apply",
+        // },
         welcome_channel_id:  {
             type: "varchar",
         },
