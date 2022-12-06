@@ -40,7 +40,7 @@ module.exports = class ApplicationForm {
                 this.date = dbApp.application_date;
                 this.answers = qaArray;
                 this.result = dbApp.result;
-                let readableApp = `${user.username} has submitted the following application: \n`;
+                let readableApp = `${user} has submitted the following application: \n`;
                 for (var qa in qaArray) {
                     readableApp += `**${qaArray[qa].question}:** \n${qaArray[qa].answer}\n\n`
                 };

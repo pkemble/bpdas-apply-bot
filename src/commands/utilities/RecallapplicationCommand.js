@@ -73,7 +73,7 @@ module.exports = class RecallApplicationCommand extends BaseCommand {
         // components: [row],
         embeds: [embed],
       });
-      console.log(`Application for ${user.username} has been recalled by ${message.user.username} in #${memberApplicationChannel.name}`);
+      console.log(`Application for ${user.username} has been recalled by ${message.user.username} in #${message.channel.name}`);
 
     } catch (error) {
       console.log(error)
