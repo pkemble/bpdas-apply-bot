@@ -6,7 +6,6 @@ const { submitApplication } = require('../../workflows/ApplicationWorkflow');
 const { SlashCommandBuilder } = require('discord.js');
 const client = null;
 let answers = [];
-
 module.exports = class ApplyCommand extends BaseCommand {
   constructor() {
     super('apply', 'application', []);
@@ -68,7 +67,7 @@ module.exports = class ApplyCommand extends BaseCommand {
         };
         await applicationForm.saveToDatabase();
         console.log(`==== Starting interrogation with the following questions: ====\n`);
-        console.table(guildApplicationQuestions,["question"]);
+        console.table(guildApplicationQuestions, ["question"]);
         await this.interrogate(0, guildApplicationQuestions, appDm, user, applicationForm, applicationOutro)
       } catch (error) {
         console.log(error);
@@ -106,6 +105,10 @@ module.exports = class ApplyCommand extends BaseCommand {
               applicationForm.readableApp = finishedApplication;
             });
             submitApplication(this.client, user, applicationForm);
+            console.table([answers]);
+            answers = [];
+            console.table([answers]);
+            console.log('== Answers are emptied. fuck that fucking bug. ==')
             console.log(`==== Interrogation complete for ${user.username}. ====`)
             return;
 
